@@ -1,0 +1,91 @@
+es6
+
+这个home组建实际是js对象, 不是真的dom
+<Home/> 组建嵌套一个div结果是在<Home />组建props属性上增加了一个children属性
+如此增加多层嵌套都是在父组件的props属性上增加children
+
+es5
+es5 是通过React.createClass({})方法创建的组件
+与es6是一样的
+
+
+那么形如HTML标签实际上却是对象的React组件是如何构成的呢？
+因为我们的组件声明基于React和Component，所以首先我们打开React.js,可以看到如下代码:
+
+const  React = {
+    Component: ReactComponent,
+    createElement: createElement,
+    createClass: ReactClass.createClass
+};
+
+module.exports = React;
+
+commonJS规范
+exports是module.exports的一个引用，exports指向的是module.exports
+也就是说exports的方法module.exports也是一定能完成的
+function ReactComponent(props, context, updater) {
+    this.props = props;
+    this.context = context;
+    this.refs = emptyObject;
+    this.updater = updater || ReactNoopUpdateQueue;
+};
+ReactComponent.prototype.setState = function() {};
+
+ReactComponent.prototype.forceUpdate = function () {
+    // 
+};
+
+module.exports = ReactComponent;
+
+setState, forceUpdate 是定义在原型上的
+
+context ----->                                                               setState
+props ----->                                ReactComponent         ------- prototype         forceUpdate
+refs ----->
+updater(ReactNoopUpdateQueue) ----->
+
+// bable中的示例代码
+
+let A = function(_Component) {
+    _inherits(A, _Component);
+    function A(){
+        _classCallCheck(this, A);
+        let _this = _possibleConstructorReturn(this,_Component.call(this));
+        _this.state = {};
+        return _this;
+    };
+    A.prototype.render = () => {
+        return React.createElement('div', null);
+    };
+    return A;
+}(Component);
+
+instanceof实现原理
+function new_instance_of(leftVaule, rightVaule) { 
+    let rightProto = rightVaule.prototype; // 取右表达式的 prototype 值
+    leftVaule = leftVaule.__proto__; // 取左表达式的__proto__值
+    while (true) {
+    	if (leftVaule === null) {
+            return false;	
+        }
+        if (leftVaule === rightProto) {
+            return true;	
+        } 
+        leftVaule = leftVaule.__proto__ 
+    }
+}
+
+function Foo(){
+    // 
+}
+
+instanceof 主要的作用就是判断一个实例是否属于某种类型
+
+Foo() instanceof Foo() // return false
+
+because instanceof 判断的时候是右边的变量prototype在左边的变量prototype上即可
+
+so instanceof 在查找的过程中会遍历
+左边变量的原型链， 直到找到右边变量的prototype, 如果失败，则会返回false;
+
+isPrototypeOf() 方法允许你检查一个对象是否存在于另一个对象的原型链上
